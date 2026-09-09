@@ -2,15 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { 
-  ChevronDown, 
-  Menu, 
-  X, 
-  Building2, 
-  Compass, 
-  Award, 
-  PhoneCall, 
-  ArrowUpRight 
+import {
+  ChevronDown,
+  Menu,
+  X,
+  Building2,
+  Compass,
+  Award,
+  PhoneCall,
+  ArrowUpRight
 } from 'lucide-react';
 
 export default function LuxuryNavbar() {
@@ -50,17 +50,16 @@ export default function LuxuryNavbar() {
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-out ${
-          isScrolled
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-out ${isScrolled
             ? 'py-3 bg-[#0B0D12]/80 backdrop-blur-xl border-b border-[#F4F1EA]/10 shadow-2xl'
             : 'py-6 bg-gradient-to-b from-[#0B0D12]/90 via-[#0B0D12]/40 to-transparent'
-        }`}
+          }`}
       >
         <div className="max-w-7xl mx-auto px-6 md:px-12">
           <nav className="flex items-center justify-between">
             {/* Brand Logo */}
-            <Link 
-              href="/" 
+            <Link
+              href="/"
               className="group flex items-center space-x-3 tracking-wider text-left transition-transform duration-300 hover:scale-105"
             >
               <div className="w-10 h-10 border border-[#C5A880]/40 rounded-full flex items-center justify-center bg-[#0B0D12]/50 group-hover:border-[#C5A880] transition-colors duration-500">
@@ -109,7 +108,7 @@ export default function LuxuryNavbar() {
                           return (
                             <Link
                               key={idx}
-                              href="#"
+                              href={`${link.href}?type=${item.title.toLowerCase().replace(' ', '-')}`}
                               className="flex items-start space-x-3 p-3 rounded-lg hover:bg-[#F4F1EA]/5 transition-colors group/item"
                             >
                               <div className="p-2 rounded-md bg-[#C5A880]/10 text-[#C5A880] group-hover/item:bg-[#C5A880] group-hover/item:text-[#0B0D12] transition-colors">
@@ -162,9 +161,8 @@ export default function LuxuryNavbar() {
 
       {/* Mobile Drawer Overlay */}
       <div
-        className={`fixed inset-0 z-40 bg-[#0B0D12]/95 backdrop-blur-2xl transition-all duration-500 md:hidden flex flex-col justify-between px-8 py-24 ${
-          mobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-        }`}
+        className={`fixed inset-0 z-40 bg-[#0B0D12]/95 backdrop-blur-2xl transition-all duration-500 md:hidden flex flex-col justify-between px-8 py-24 ${mobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+          }`}
       >
         <div className="space-y-6">
           <p className="text-[10px] uppercase tracking-[0.3em] text-[#C5A880]">
