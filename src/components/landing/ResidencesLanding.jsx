@@ -1,342 +1,399 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { ArrowLeft, ArrowRight, ArrowUpRight } from 'lucide-react';
 import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { ArrowDown, ArrowUpRight, MapPin } from 'lucide-react';
-
-gsap.registerPlugin(ScrollTrigger);
 
 const RESIDENCES = [
     {
         number: '01',
-        name: 'The Glass House',
-        location: 'Westlake, California',
-        type: 'Private Residence',
-        image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=90&w=2400&auto=format&fit=crop',
-        description: 'A quiet architectural composition shaped around light, landscape and uninterrupted views.',
+        name: 'Casa Lume',
+        location: 'Scottsdale, Arizona',
+        type: 'Desert Estate',
+        image: 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=2400&q=90',
     },
     {
         number: '02',
-        name: 'Casa Aurelia',
-        location: 'Palm Springs, California',
-        type: 'Desert Estate',
-        image: 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?q=90&w=2400&auto=format&fit=crop',
-        description: 'A sculptural retreat where natural materials meet expansive desert horizons.',
+        name: 'Villa Nera',
+        location: 'Lake Como, Italy',
+        type: 'Private Villa',
+        image: 'https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=2400&q=90',
     },
     {
         number: '03',
-        name: 'Villa No. 8',
-        location: 'Malibu, California',
-        type: 'Ocean Residence',
-        image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=90&w=2400&auto=format&fit=crop',
-        description: 'An elevated coastal residence designed around openness, privacy and the Pacific.',
+        name: 'Maison Arco',
+        location: 'Capri, Italy',
+        type: 'Coastal Residence',
+        image: 'https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=2400&q=90',
+    },
+    {
+        number: '04',
+        name: 'Casa Forma',
+        location: 'Tulum, Mexico',
+        type: 'Tropical Residence',
+        image: 'https://images.unsplash.com/photo-1600607688969-a5bfcd646154?auto=format&fit=crop&w=2400&q=90',
     },
 ];
 
-export default function ResidencesLanding() {
-    const root = useRef(null);
+export default function ResidenceSlider() {
+    const sectionRef = useRef(null);
+    const imageRef = useRef(null);
+    const titleRef = useRef(null);
+    const locationRef = useRef(null);
+    const typeRef = useRef(null);
+    const numberRef = useRef(null);
+    const progressRef = useRef(null);
+    const indexRef = useRef(0);
+    const timerRef = useRef(null);
+    const busyRef = useRef(false);
+    const [active, setActive] = useState(0);
+
+    const stopAuto = () => {
+        if (timerRef.current) {
+            timerRef.current.kill();
+            timerRef.current = null;
+        }
+    };
+
+    const startAuto = () => {
+        stopAuto();
+        timerRef.current = gsap.delayedCall(3, () => {
+            changeSlide(indexRef.current + 1, 1);
+        });
+    };
+
+    const changeSlide = (target, direction = 1) => {
+        if (busyRef.current) return;
+
+        const next = (target + RESIDENCES.length) % RESIDENCES.length;
+        const current = indexRef.current;
+
+        if (next === current) return;
+
+        const data = RESIDENCES[next];
+
+        busyRef.current = true;
+        stopAuto();
+
+        const image = imageRef.current;
+        const title = titleRef.current;
+        const location = locationRef.current;
+        const type = typeRef.current;
+        const number = numberRef.current;
+
+        gsap.killTweensOf([
+            image,
+            title,
+            location,
+            type,
+            number,
+            progressRef.current,
+        ]);
+
+        const tl = gsap.timeline({
+            onComplete: () => {
+                indexRef.current = next;
+                setActive(next);
+                busyRef.current = false;
+                startAuto();
+            },
+        });
+
+        tl.to(
+            [title, location, type, number],
+            {
+                y: direction > 0 ? -18 : 18,
+                autoAlpha: 0,
+                duration: 0.32,
+                stagger: 0.02,
+                ease: 'power2.in',
+            },
+            0
+        );
+
+        tl.to(
+            image,
+            {
+                scale: 1.06,
+                autoAlpha: 0,
+                duration: 0.42,
+                ease: 'power2.in',
+                onComplete: () => {
+                    image.src = data.image;
+                    title.textContent = data.name;
+                    location.textContent = data.location;
+                    type.textContent = data.type;
+                    number.textContent = data.number;
+                },
+            },
+            0.08
+        );
+
+        tl.fromTo(
+            image,
+            {
+                scale: 1.08,
+                autoAlpha: 0,
+            },
+            {
+                scale: 1,
+                autoAlpha: 1,
+                duration: 0.75,
+                ease: 'power3.out',
+            },
+            0.45
+        );
+
+        tl.fromTo(
+            [title, location, type, number],
+            {
+                y: direction > 0 ? 18 : -18,
+                autoAlpha: 0,
+            },
+            {
+                y: 0,
+                autoAlpha: 1,
+                duration: 0.55,
+                stagger: 0.035,
+                ease: 'power3.out',
+            },
+            0.55
+        );
+
+        tl.to(
+            progressRef.current,
+            {
+                width: `${((next + 1) / RESIDENCES.length) * 100}%`,
+                duration: 0.6,
+                ease: 'power2.out',
+            },
+            0.45
+        );
+    };
 
     useEffect(() => {
         const ctx = gsap.context(() => {
-            const section = root.current;
+            gsap.set(imageRef.current, {
+                autoAlpha: 1,
+                scale: 1,
+            });
 
-            gsap.from('.res-hero-image', {
-                scale: 1.18,
-                opacity: 0,
-                duration: 1.8,
+            gsap.set(
+                [
+                    titleRef.current,
+                    locationRef.current,
+                    typeRef.current,
+                    numberRef.current,
+                ],
+                {
+                    autoAlpha: 1,
+                    y: 0,
+                }
+            );
+
+            gsap.from('[data-heading]', {
+                y: 25,
+                autoAlpha: 0,
+                duration: 0.8,
                 ease: 'power3.out',
             });
 
-            gsap.from('.res-hero-content > *', {
-                y: 70,
-                opacity: 0,
-                duration: 1.2,
-                stagger: 0.12,
-                delay: 0.25,
-                ease: 'power4.out',
-            });
-
-            gsap.from('.res-intro-title', {
-                scrollTrigger: {
-                    trigger: '.res-intro',
-                    start: 'top 75%',
-                    end: 'top 35%',
-                    scrub: 1.2,
-                },
-                yPercent: 100,
-                opacity: 0,
-                ease: 'power4.out',
-            });
-
-            gsap.from('.res-intro-copy', {
-                scrollTrigger: {
-                    trigger: '.res-intro',
-                    start: 'top 70%',
-                    end: 'top 40%',
-                    scrub: 1.2,
-                },
-                y: 60,
-                opacity: 0,
+            gsap.from('[data-slider]', {
+                y: 35,
+                autoAlpha: 0,
+                duration: 0.9,
+                delay: 0.1,
                 ease: 'power3.out',
             });
 
-            gsap.utils.toArray('.residence-item').forEach((item) => {
-                const image = item.querySelector('.residence-image');
-                const inner = item.querySelector('.residence-image img');
-                const content = item.querySelector('.residence-content');
+            startAuto();
+        }, sectionRef);
 
-                gsap.from(image, {
-                    scrollTrigger: {
-                        trigger: item,
-                        start: 'top 85%',
-                        end: 'top 35%',
-                        scrub: 1.2,
-                    },
-                    clipPath: 'inset(14% 10% 14% 10%)',
-                    scale: 1.08,
-                    ease: 'power3.out',
-                });
-
-                gsap.to(inner, {
-                    scrollTrigger: {
-                        trigger: item,
-                        start: 'top bottom',
-                        end: 'bottom top',
-                        scrub: 1.5,
-                    },
-                    yPercent: -8,
-                    scale: 1.05,
-                    ease: 'none',
-                });
-
-                gsap.from(content.children, {
-                    scrollTrigger: {
-                        trigger: item,
-                        start: 'top 65%',
-                        end: 'top 35%',
-                        scrub: 1,
-                    },
-                    y: 45,
-                    opacity: 0,
-                    stagger: 0.08,
-                    ease: 'power3.out',
-                });
-            });
-
-            gsap.to('.res-final-image img', {
-                scrollTrigger: {
-                    trigger: '.res-final',
-                    start: 'top bottom',
-                    end: 'bottom top',
-                    scrub: 1.5,
-                },
-                scale: 1.12,
-                yPercent: -5,
-                ease: 'none',
-            });
-
-            gsap.from('.res-final-content > *', {
-                scrollTrigger: {
-                    trigger: '.res-final',
-                    start: 'top 70%',
-                    end: 'top 35%',
-                    scrub: 1,
-                },
-                y: 50,
-                opacity: 0,
-                stagger: 0.1,
-                ease: 'power3.out',
-            });
-        }, root);
-
-        return () => ctx.revert();
+        return () => {
+            stopAuto();
+            ctx.revert();
+        };
     }, []);
 
+    const current = RESIDENCES[active];
+
     return (
-        <main ref={root} className="overflow-hidden bg-[#090A0D] text-[#F4F1EA]">
-            <section className="relative h-screen min-h-[700px] overflow-hidden">
-                <div className="res-hero-image absolute inset-0">
-                    <img
-                        src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=90&w=2600&auto=format&fit=crop"
-                        alt="Luxury architectural residence"
-                        className="h-full w-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black/35" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#090A0D] via-transparent to-black/20" />
-                </div>
-
-                <div className="res-hero-content absolute inset-x-0 bottom-0 mx-auto max-w-[1600px] px-6 pb-12 sm:px-10 sm:pb-16 lg:px-16 lg:pb-20 xl:px-24">
-                    <div className="mb-8 flex items-center gap-4">
-                        <span className="h-px w-10 bg-[#C5A880]" />
-                        <span className="text-[10px] font-semibold uppercase tracking-[0.35em] text-[#C5A880]">
-                            The Residences
-                        </span>
-                    </div>
-
-                    <div className="flex flex-col justify-between gap-10 lg:flex-row lg:items-end">
-                        <h1 className="max-w-[1000px] font-serif text-[18vw] font-light leading-[0.76] tracking-[-0.07em] sm:text-[14vw] lg:text-[10.5vw]">
-                            Exceptional
-                            <br />
-                            <em className="text-[#C5A880]">by nature.</em>
-                        </h1>
-
-                        <div className="max-w-[310px] lg:mb-2">
-                            <p className="text-sm font-light leading-7 text-white/65">
-                                A private collection of residences defined by
-                                architecture, setting and an uncompromising
-                                sense of place.
-                            </p>
-
-                            <a
-                                href="#collection"
-                                className="group mt-7 inline-flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.3em]"
-                            >
-                                <span>Explore collection</span>
-                                <span className="flex h-9 w-9 items-center justify-center rounded-full border border-white/30 transition-all duration-500 group-hover:bg-[#F4F1EA] group-hover:text-[#090A0D]">
-                                    <ArrowDown className="h-3.5 w-3.5 transition-transform duration-500 group-hover:translate-y-0.5" />
-                                </span>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <section className="res-intro bg-[#E8E4DB] text-[#11120F]" id="collection">
-                <div className="mx-auto max-w-[1600px] px-6 py-32 sm:px-10 sm:py-40 lg:px-16 lg:py-52 xl:px-24">
-                    <div className="grid grid-cols-1 gap-16 lg:grid-cols-12 lg:gap-10">
-                        <div className="lg:col-span-8">
-                            <div className="mb-10 flex items-center gap-4">
-                                <span className="h-px w-10 bg-[#9A8060]" />
-                                <span className="text-[10px] font-semibold uppercase tracking-[0.35em] text-[#806A50]">
-                                    A considered collection
-                                </span>
-                            </div>
-
-                            <div className="overflow-hidden">
-                                <h2 className="res-intro-title max-w-[900px] font-serif text-[13vw] font-light leading-[0.82] tracking-[-0.065em] sm:text-[10vw] lg:text-[7.5vw]">
-                                    Places with
-                                    <br />
-                                    <em className="text-[#9A8060]">presence.</em>
-                                </h2>
-                            </div>
-                        </div>
-
-                        <div className="flex items-end lg:col-span-4">
-                            <p className="res-intro-copy max-w-[390px] text-base font-light leading-8 text-[#11120F]/60 sm:text-lg">
-                                We believe a remarkable residence should feel
-                                inevitable within its landscape. Every property
-                                is selected for its character, architecture and
-                                ability to become something deeply personal.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <section className="bg-[#E8E4DB] pb-32 text-[#11120F] sm:pb-40 lg:pb-52">
-                <div className="mx-auto max-w-[1600px] px-6 sm:px-10 lg:px-16 xl:px-24">
-                    {RESIDENCES.map((residence, index) => (
-                        <article
-                            key={residence.number}
-                            className={`residence-item border-t border-[#11120F]/15 py-16 sm:py-24 lg:py-32 ${index % 2 === 1 ? 'lg:pl-[8vw]' : ''
-                                }`}
-                        >
-                            <div className="grid grid-cols-1 items-end gap-12 lg:grid-cols-12 lg:gap-10">
-                                <div className="residence-image relative h-[68vh] min-h-[520px] overflow-hidden lg:col-span-8 lg:h-[78vh]">
-                                    <img
-                                        src={residence.image}
-                                        alt={residence.name}
-                                        className="h-[115%] w-full object-cover will-change-transform"
-                                    />
-
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
-
-                                    <div className="absolute bottom-7 left-7 right-7 flex items-end justify-between text-white sm:bottom-9 sm:left-9 sm:right-9">
-                                        <div className="flex items-center gap-2">
-                                            <MapPin className="h-3 w-3 text-[#C5A880]" />
-                                            <span className="text-[9px] uppercase tracking-[0.28em]">
-                                                {residence.location}
-                                            </span>
-                                        </div>
-
-                                        <span className="text-[9px] uppercase tracking-[0.3em] text-white/60">
-                                            {residence.number}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <div className="residence-content lg:col-span-4 lg:pb-3 lg:pl-8">
-                                    <p className="text-[9px] font-semibold uppercase tracking-[0.3em] text-[#9A8060]">
-                                        {residence.type}
-                                    </p>
-
-                                    <h3 className="mt-5 font-serif text-5xl font-light leading-[0.9] tracking-[-0.05em] sm:text-6xl lg:text-[5vw]">
-                                        {residence.name}
-                                    </h3>
-
-                                    <p className="mt-8 max-w-[330px] text-sm font-light leading-7 text-[#11120F]/55">
-                                        {residence.description}
-                                    </p>
-
-                                    <a
-                                        href="#"
-                                        className="group mt-9 inline-flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.25em]"
-                                    >
-                                        <span>Discover residence</span>
-                                        <span className="flex h-9 w-9 items-center justify-center rounded-full border border-[#11120F]/20 transition-all duration-500 group-hover:bg-[#11120F] group-hover:text-[#E8E4DB]">
-                                            <ArrowUpRight className="h-3.5 w-3.5 transition-transform duration-500 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-                                        </span>
-                                    </a>
-                                </div>
-                            </div>
-                        </article>
-                    ))}
-                </div>
-            </section>
-
-            <section className="res-final relative h-[85vh] min-h-[650px] overflow-hidden">
-                <div className="res-final-image absolute inset-0">
-                    <img
-                        src="https://images.unsplash.com/photo-1600607688969-a5bfcd646154?q=90&w=2600&auto=format&fit=crop"
-                        alt="Luxury modern home at dusk"
-                        className="h-full w-full object-cover will-change-transform"
-                    />
-                    <div className="absolute inset-0 bg-black/40" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-black/20" />
-                </div>
-
-                <div className="res-final-content absolute inset-x-0 bottom-0 mx-auto max-w-[1600px] px-6 pb-12 sm:px-10 sm:pb-16 lg:px-16 lg:pb-20 xl:px-24">
-                    <div className="max-w-[850px]">
-                        <p className="mb-7 text-[10px] font-semibold uppercase tracking-[0.35em] text-[#C5A880]">
-                            Find your place
+        <section
+            ref={sectionRef}
+            className="bg-[#E8E4DB] px-6 py-16 text-[#11120F] md:px-10 md:py-20 lg:px-16 lg:py-24"
+        >
+            <div className="mx-auto max-w-[1500px]">
+                <div
+                    data-heading
+                    className="mb-8 flex items-end justify-between md:mb-10"
+                >
+                    <div>
+                        <p className="mb-3 text-[9px] uppercase tracking-[0.35em] text-[#9A8060]">
+                            The collection
                         </p>
-
-                        <h2 className="font-serif text-[15vw] font-light leading-[0.8] tracking-[-0.07em] sm:text-[11vw] lg:text-[8vw]">
-                            Your next
-                            <br />
-                            <em className="text-[#C5A880]">chapter.</em>
+                        <h2 className="text-[clamp(2.8rem,5vw,5.5rem)] font-light leading-[0.88] tracking-[-0.055em]">
+                            Selected residences.
                         </h2>
+                    </div>
 
-                        <div className="mt-10 flex flex-col gap-7 sm:flex-row sm:items-center">
-                            <p className="max-w-[350px] text-sm font-light leading-7 text-white/60">
-                                Begin a private conversation about a residence
-                                selected around the way you want to live.
+                    <div className="hidden text-right md:block">
+                        <p className="text-[9px] uppercase tracking-[0.3em] text-black/40">
+                            Private collection
+                        </p>
+                        <p className="mt-1 text-xs text-black/50">
+                            Architecture / Living
+                        </p>
+                    </div>
+                </div>
+
+                <div
+                    data-slider
+                    className="grid h-[520px] grid-cols-1 gap-6 md:grid-cols-[210px_1fr] lg:grid-cols-[250px_1fr]"
+                >
+                    <div className="hidden flex-col justify-between md:flex">
+                        <div className="pt-2">
+                            <p className="mb-5 text-[9px] uppercase tracking-[0.3em] text-black/35">
+                                Explore
                             </p>
 
-                            <a
-                                href="#"
-                                className="group inline-flex w-fit items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.3em]"
+                            <div className="relative">
+                                <div className="absolute bottom-3 left-[3px] top-3 w-px bg-black/10" />
+
+                                {RESIDENCES.map((residence, index) => (
+                                    <button
+                                        key={residence.number}
+                                        onClick={() =>
+                                            changeSlide(
+                                                index,
+                                                index > active ? 1 : -1
+                                            )
+                                        }
+                                        className="relative z-10 flex w-full items-center gap-4 py-3 text-left"
+                                    >
+                                        <span
+                                            className={`h-[7px] w-[7px] shrink-0 rounded-full border transition-all duration-500 ${active === index
+                                                    ? 'scale-150 border-[#9A8060] bg-[#9A8060]'
+                                                    : 'border-black/30 bg-[#E8E4DB]'
+                                                }`}
+                                        />
+
+                                        <span
+                                            className={`text-sm transition-all duration-500 ${active === index
+                                                    ? 'translate-x-1 text-[#11120F]'
+                                                    : 'text-black/35'
+                                                }`}
+                                        >
+                                            {residence.name}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="border-t border-black/10 pt-4">
+                            <p className="text-[9px] uppercase tracking-[0.25em] text-black/35">
+                                Location
+                            </p>
+                            <p className="mt-2 text-xs">{current.location}</p>
+                        </div>
+                    </div>
+
+                    <div
+                        className="relative h-full overflow-hidden bg-black"
+                        onMouseEnter={stopAuto}
+                        onMouseLeave={startAuto}
+                    >
+                        <img
+                            ref={imageRef}
+                            src={current.image}
+                            alt={current.name}
+                            draggable="false"
+                            className="absolute inset-0 h-full w-full object-cover"
+                        />
+
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/5 to-black/10" />
+
+                        <div className="absolute left-5 right-5 top-5 flex items-start justify-between md:left-7 md:right-7 md:top-7">
+                            <span
+                                ref={numberRef}
+                                className="text-[10px] tracking-[0.3em] text-white/75"
                             >
-                                <span>Begin a conversation</span>
-                                <span className="flex h-10 w-10 items-center justify-center rounded-full border border-white/30 transition-all duration-500 group-hover:bg-white group-hover:text-[#090A0D]">
-                                    <ArrowUpRight className="h-3.5 w-3.5 transition-transform duration-500 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                                {current.number}
+                            </span>
+
+                            <span
+                                ref={typeRef}
+                                className="text-[9px] uppercase tracking-[0.28em] text-white/65"
+                            >
+                                {current.type}
+                            </span>
+                        </div>
+
+                        <div className="absolute bottom-5 left-5 right-5 md:bottom-7 md:left-7 md:right-7">
+                            <div className="mb-3 flex items-center gap-3">
+                                <span className="h-px w-7 bg-[#C5A880]" />
+
+                                <span
+                                    ref={locationRef}
+                                    className="text-[9px] uppercase tracking-[0.25em] text-white/70"
+                                >
+                                    {current.location}
                                 </span>
-                            </a>
+                            </div>
+
+                            <div className="flex items-end justify-between gap-5">
+                                <h3
+                                    ref={titleRef}
+                                    className="text-[clamp(2.5rem,5vw,5.5rem)] font-light leading-[0.85] tracking-[-0.055em] text-white"
+                                >
+                                    {current.name}
+                                </h3>
+
+                                <button
+                                    type="button"
+                                    className="group hidden h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/30 text-white transition-all duration-500 hover:border-[#C5A880] hover:bg-[#C5A880] hover:text-[#11120F] md:flex"
+                                >
+                                    <ArrowUpRight
+                                        size={17}
+                                        strokeWidth={1.2}
+                                        className="transition-transform duration-500 group-hover:rotate-45"
+                                    />
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </section>
-        </main>
+
+                <div className="mt-5 flex items-center gap-5">
+                    <button
+                        type="button"
+                        onClick={() => changeSlide(active - 1, -1)}
+                        className="flex h-10 w-10 items-center justify-center rounded-full border border-black/15 transition-colors duration-300 hover:border-[#9A8060]"
+                    >
+                        <ArrowLeft size={15} strokeWidth={1.2} />
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={() => changeSlide(active + 1, 1)}
+                        className="flex h-10 w-10 items-center justify-center rounded-full border border-black/15 transition-colors duration-300 hover:border-[#9A8060]"
+                    >
+                        <ArrowRight size={15} strokeWidth={1.2} />
+                    </button>
+
+                    <div className="relative h-px flex-1 overflow-hidden bg-black/10">
+                        <div
+                            ref={progressRef}
+                            className="absolute left-0 top-0 h-full w-[25%] bg-[#9A8060]"
+                        />
+                    </div>
+
+                    <span className="text-[9px] tracking-[0.25em] text-black/40">
+                        {String(active + 1).padStart(2, '0')} /{' '}
+                        {String(RESIDENCES.length).padStart(2, '0')}
+                    </span>
+                </div>
+            </div>
+        </section>
     );
 }
