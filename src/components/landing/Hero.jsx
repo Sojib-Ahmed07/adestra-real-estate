@@ -7,396 +7,322 @@ import { ArrowUpRight } from 'lucide-react';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const PROPERTIES = [
+const VIDEO_URL =
+    'https://videos.pexels.com/video-files/30670725/13125568_1920_1080_30fps.mp4';
+
+const scenes = [
     {
-        image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=90&w=2200&auto=format&fit=crop',
-        type: 'Private Residence',
-        location: 'Los Angeles, California',
-        description: 'A refined architectural residence shaped by natural light, quiet proportions, and complete privacy.',
+        eyebrow: 'A new way to live',
+        lines: ['Live', 'beautifully.'],
+        description:
+            'Exceptional residences designed around light, space and the way you want to live.',
+        button: 'Explore residences'
     },
     {
-        image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=90&w=2200&auto=format&fit=crop',
-        type: 'Coastal Estate',
-        location: 'Malibu, California',
-        description: 'An exceptional coastal retreat where sculptural architecture meets the endless Pacific horizon.',
+        eyebrow: 'Architecture with purpose',
+        lines: ['Made for', 'living.'],
+        description:
+            'Refined spaces, considered details and an atmosphere that feels unmistakably yours.',
+        button: null
     },
     {
-        image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=90&w=2200&auto=format&fit=crop',
-        type: 'Architectural Residence',
-        location: 'Palm Springs, California',
-        description: 'A considered composition of stone, glass, and open space immersed in the surrounding desert.',
-    },
+        eyebrow: 'Find somewhere extraordinary',
+        lines: ['Find your', 'place.'],
+        description:
+            'Discover homes created for the moments that matter and the life you want to build.',
+        button: 'View properties'
+    }
 ];
 
 export default function HeroSection() {
-    const root = useRef(null);
-    const imageFrame = useRef(null);
-    const heroContent = useRef(null);
+    const section = useRef(null);
+    const video = useRef(null);
+    const scenesRef = useRef([]);
 
     useEffect(() => {
         const ctx = gsap.context(() => {
-            const section = root.current;
-            const frame = imageFrame.current;
-            const content = heroContent.current;
+            const sceneElements = scenesRef.current;
 
-            const images = gsap.utils.toArray('.property-image');
-            const propertyInfo = gsap.utils.toArray('.property-info');
+            sceneElements.forEach((scene, index) => {
+                if (!scene) return;
 
-            if (!section || !frame || !content || images.length !== 3) return;
+                const eyebrow = scene.querySelector('.hero-eyebrow');
+                const lines = scene.querySelectorAll('.hero-line');
+                const description = scene.querySelector('.hero-description');
+                const button = scene.querySelector('.hero-button');
 
-            gsap.set(images, {
-                opacity: 0,
-                scale: 1.08,
+                gsap.set(scene, {
+                    autoAlpha: index === 0 ? 1 : 0
+                });
+
+                gsap.set(eyebrow, {
+                    opacity: index === 0 ? 1 : 0,
+                    y: index === 0 ? 0 : 18
+                });
+
+                gsap.set(lines, {
+                    opacity: index === 0 ? 1 : 0,
+                    y: index === 0 ? 0 : 70
+                });
+
+                gsap.set(description, {
+                    opacity: index === 0 ? 1 : 0,
+                    y: index === 0 ? 0 : 20
+                });
+
+                if (button) {
+                    gsap.set(button, {
+                        opacity: index === 0 ? 1 : 0,
+                        y: index === 0 ? 0 : 18
+                    });
+                }
             });
 
-            gsap.set(images[0], {
-                opacity: 1,
-                scale: 1,
-            });
-
-            gsap.set(propertyInfo, {
-                opacity: 0,
-                y: 40,
-            });
-
-            const intro = gsap.timeline();
-
-            intro
-                .from('.hero-eyebrow', {
-                    y: 25,
-                    opacity: 0,
-                    duration: 0.9,
-                    ease: 'power3.out',
-                })
-                .from(
-                    '.hero-line',
-                    {
-                        yPercent: 110,
-                        opacity: 0,
-                        duration: 1.1,
-                        stagger: 0.1,
-                        ease: 'power4.out',
-                    },
-                    '-=0.55'
-                )
-                .from(
-                    '.hero-description',
-                    {
-                        y: 25,
-                        opacity: 0,
-                        duration: 0.8,
-                        ease: 'power3.out',
-                    },
-                    '-=0.7'
-                )
-                .from(
-                    '.hero-button',
-                    {
-                        y: 20,
-                        opacity: 0,
-                        duration: 0.7,
-                        ease: 'power3.out',
-                    },
-                    '-=0.5'
-                )
-                .fromTo(
-                    frame,
-                    {
-                        clipPath: 'inset(0 100% 0 0)',
-                    },
-                    {
-                        clipPath: 'inset(0 0% 0 0)',
-                        duration: 1.4,
-                        ease: 'power4.inOut',
-                    },
-                    '-=1.1'
-                );
-
-            const tl = gsap.timeline({
+            const timeline = gsap.timeline({
                 scrollTrigger: {
-                    trigger: section,
+                    trigger: section.current,
                     start: 'top top',
                     end: 'bottom bottom',
                     scrub: 1.5,
-                },
+                    invalidateOnRefresh: true
+                }
             });
 
-            tl.to(
-                content,
-                {
-                    y: -120,
-                    opacity: 0,
-                    duration: 0.18,
-                    ease: 'power2.inOut',
-                },
-                0.02
-            );
+            const sceneIn = (scene) => {
+                const eyebrow = scene.querySelector('.hero-eyebrow');
+                const lines = scene.querySelectorAll('.hero-line');
+                const description = scene.querySelector('.hero-description');
+                const button = scene.querySelector('.hero-button');
 
-            tl.to(
-                frame,
-                {
-                    top: '3%',
-                    right: '0%',
-                    width: '100%',
-                    height: '94%',
-                    borderRadius: 0,
-                    duration: 0.28,
-                    ease: 'power3.inOut',
-                },
-                0.08
-            );
+                timeline
+                    .to(
+                        scene,
+                        {
+                            autoAlpha: 1,
+                            duration: 0.01
+                        },
+                        '>'
+                    )
+                    .to(
+                        eyebrow,
+                        {
+                            opacity: 1,
+                            y: 0,
+                            duration: 0.22,
+                            ease: 'power2.out'
+                        },
+                        '<'
+                    )
+                    .to(
+                        lines,
+                        {
+                            opacity: 1,
+                            y: 0,
+                            duration: 0.48,
+                            stagger: 0.09,
+                            ease: 'power3.out'
+                        },
+                        '<0.05'
+                    )
+                    .to(
+                        description,
+                        {
+                            opacity: 1,
+                            y: 0,
+                            duration: 0.3,
+                            ease: 'power2.out'
+                        },
+                        '<0.2'
+                    );
 
-            tl.to(
-                images[0],
-                {
-                    scale: 1.04,
-                    duration: 0.22,
-                    ease: 'none',
-                },
-                0
-            );
+                if (button) {
+                    timeline.to(
+                        button,
+                        {
+                            opacity: 1,
+                            y: 0,
+                            duration: 0.28,
+                            ease: 'power2.out'
+                        },
+                        '<0.06'
+                    );
+                }
 
-            tl.to(
-                images[0],
-                {
-                    opacity: 0,
-                    scale: 1.08,
-                    duration: 0.08,
-                    ease: 'power2.inOut',
-                },
-                0.27
-            );
+                timeline.to({}, { duration: 0.7 });
+            };
 
-            tl.fromTo(
-                images[1],
-                {
-                    opacity: 0,
-                    scale: 1.1,
-                },
-                {
-                    opacity: 1,
-                    scale: 1,
-                    duration: 0.12,
-                    ease: 'power3.out',
-                },
-                0.29
-            );
+            const sceneOut = (scene) => {
+                const eyebrow = scene.querySelector('.hero-eyebrow');
+                const lines = scene.querySelectorAll('.hero-line');
+                const description = scene.querySelector('.hero-description');
+                const button = scene.querySelector('.hero-button');
 
-            tl.to(
-                images[1],
-                {
-                    scale: 1.045,
-                    duration: 0.22,
-                    ease: 'none',
-                },
-                0.41
-            );
+                if (button) {
+                    timeline.to(
+                        button,
+                        {
+                            opacity: 0,
+                            y: -18,
+                            duration: 0.16,
+                            ease: 'power2.inOut'
+                        },
+                        '>'
+                    );
+                }
 
-            tl.fromTo(
-                propertyInfo[0],
-                {
-                    opacity: 0,
-                    y: 40,
-                },
-                {
-                    opacity: 1,
-                    y: 0,
-                    duration: 0.1,
-                    ease: 'power3.out',
-                },
-                0.34
-            );
+                timeline
+                    .to(
+                        description,
+                        {
+                            opacity: 0,
+                            y: -22,
+                            duration: 0.2,
+                            ease: 'power2.inOut'
+                        },
+                        '<0.04'
+                    )
+                    .to(
+                        eyebrow,
+                        {
+                            opacity: 0,
+                            y: -16,
+                            duration: 0.18,
+                            ease: 'power2.inOut'
+                        },
+                        '<0.05'
+                    )
+                    .to(
+                        lines,
+                        {
+                            opacity: 0,
+                            y: -55,
+                            duration: 0.35,
+                            stagger: 0.05,
+                            ease: 'power3.inOut'
+                        },
+                        '<0.02'
+                    )
+                    .to(
+                        scene,
+                        {
+                            autoAlpha: 0,
+                            duration: 0.01
+                        },
+                        '>'
+                    );
 
-            tl.to(
-                propertyInfo[0],
-                {
-                    opacity: 0,
-                    y: -30,
-                    duration: 0.08,
-                    ease: 'power2.in',
-                },
-                0.52
-            );
+                timeline.to({}, { duration: 0.22 });
+            };
 
-            tl.to(
-                images[1],
-                {
-                    opacity: 0,
-                    scale: 1.08,
-                    duration: 0.08,
-                    ease: 'power2.inOut',
-                },
-                0.54
-            );
+            sceneIn(sceneElements[0]);
+            sceneOut(sceneElements[0]);
 
-            tl.fromTo(
-                images[2],
-                {
-                    opacity: 0,
-                    scale: 1.1,
-                },
-                {
-                    opacity: 1,
-                    scale: 1,
-                    duration: 0.13,
-                    ease: 'power3.out',
-                },
-                0.56
-            );
+            sceneIn(sceneElements[1]);
+            sceneOut(sceneElements[1]);
 
-            tl.to(
-                images[2],
-                {
-                    scale: 1.04,
-                    duration: 0.27,
-                    ease: 'none',
-                },
-                0.69
-            );
+            sceneIn(sceneElements[2]);
 
-            tl.fromTo(
-                propertyInfo[1],
-                {
-                    opacity: 0,
-                    y: 40,
-                },
-                {
-                    opacity: 1,
-                    y: 0,
-                    duration: 0.1,
-                    ease: 'power3.out',
-                },
-                0.61
-            );
+            timeline.to({}, { duration: 0.55 });
 
-            tl.to(
-                propertyInfo[1],
-                {
-                    opacity: 0,
-                    y: -30,
-                    duration: 0.1,
-                    ease: 'power2.in',
-                },
-                0.88
-            );
+            if (video.current) {
+                const play = () => {
+                    const promise = video.current.play();
 
-            tl.to(
-                frame,
-                {
-                    scale: 0.985,
-                    duration: 0.12,
-                    ease: 'power2.out',
-                },
-                0.88
-            );
-        }, root);
+                    if (promise) {
+                        promise.catch(() => { });
+                    }
+                };
+
+                video.current.addEventListener('loadeddata', play);
+                play();
+
+                return () => {
+                    video.current?.removeEventListener('loadeddata', play);
+                };
+            }
+
+            ScrollTrigger.refresh();
+        }, section);
 
         return () => ctx.revert();
     }, []);
 
     return (
         <section
-            ref={root}
-            className="relative h-[450vh] w-full bg-[#090A0D] text-[#F4F1EA]"
+            ref={section}
+            className="relative h-[250vh] w-full bg-[#08090b]"
         >
             <div className="sticky top-0 h-screen w-full overflow-hidden">
-                <div className="absolute inset-0 bg-[#090A0D]" />
+                <video
+                    ref={video}
+                    src={VIDEO_URL}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload="auto"
+                    className="absolute inset-0 h-full w-full object-cover"
+                />
 
-                <div className="absolute left-[35%] top-[25%] h-[55vh] w-[45vw] rounded-full bg-[#C5A880]/[0.045] blur-[150px]" />
+                <div className="absolute inset-0 bg-black/15" />
 
-                <div
-                    ref={imageFrame}
-                    className="absolute right-[4vw] top-[10vh] z-[2] h-[82vh] w-[58vw] overflow-hidden rounded-[3px] bg-[#141518] will-change-transform"
-                >
-                    {PROPERTIES.map((property, index) => (
-                        <img
-                            key={property.image}
-                            src={property.image}
-                            alt={property.type}
-                            className={`property-image absolute inset-0 h-full w-full object-cover ${index === 0 ? 'opacity-100' : 'opacity-0'
-                                }`}
-                        />
-                    ))}
+                <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/30 to-transparent" />
 
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/25 via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/10" />
 
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-black/5 to-black/10" />
+                <div className="absolute inset-0">
+                    {scenes.map((scene, index) => (
+                        <div
+                            key={scene.eyebrow}
+                            ref={(element) => {
+                                scenesRef.current[index] = element;
+                            }}
+                            className="absolute inset-0 flex items-center"
+                        >
+                            <div className="ml-[7vw] w-[86vw] max-w-[760px] md:ml-[8vw]">
+                                <div className="hero-eyebrow mb-7 text-[9px] font-medium uppercase tracking-[0.45em] text-[#c5a880] will-change-transform">
+                                    {scene.eyebrow}
+                                </div>
 
-                    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_55%_45%,transparent_25%,rgba(0,0,0,0.3)_100%)]" />
+                                <h1 className="font-serif text-[clamp(4.2rem,9vw,9.5rem)] font-light leading-[0.82] tracking-[-0.075em] text-[#f4f1ea]">
+                                    {scene.lines.map((line) => (
+                                        <span
+                                            key={line}
+                                            className="hero-line block will-change-transform"
+                                        >
+                                            {line}
+                                        </span>
+                                    ))}
+                                </h1>
 
-                    <div className="pointer-events-none absolute bottom-8 left-8 z-20 sm:bottom-10 sm:left-10">
-                        {PROPERTIES.slice(1).map((property) => (
-                            <div
-                                key={property.location}
-                                className="property-info absolute bottom-0 left-0 w-[min(75vw,420px)]"
-                            >
-                                <p className="text-[9px] font-medium uppercase tracking-[0.35em] text-[#C5A880]">
-                                    {property.type}
+                                <p className="hero-description mt-8 max-w-[390px] text-[13px] leading-[1.8] text-white/60 will-change-transform">
+                                    {scene.description}
                                 </p>
 
-                                <h2 className="mt-3 font-serif text-3xl font-light leading-none text-white sm:text-4xl">
-                                    {property.location}
-                                </h2>
+                                {scene.button && (
+                                    <a
+                                        href="#properties"
+                                        className="hero-button group mt-9 inline-flex items-center gap-4 will-change-transform"
+                                    >
+                                        <span className="text-[9px] uppercase tracking-[0.3em] text-white">
+                                            {scene.button}
+                                        </span>
 
-                                <p className="mt-4 max-w-[380px] text-xs font-light leading-6 tracking-wide text-white/65 sm:text-sm">
-                                    {property.description}
-                                </p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                <div
-                    ref={heroContent}
-                    className="relative z-10 flex h-full items-center"
-                >
-                    <div className="w-full px-6 pt-24 sm:px-10 lg:px-16 xl:px-24">
-                        <div className="max-w-[640px]">
-                            <div className="hero-eyebrow mb-7 flex items-center gap-4">
-                                <span className="h-px w-10 bg-[#C5A880]" />
-
-                                <span className="text-[10px] font-medium uppercase tracking-[0.35em] text-[#C5A880]">
-                                    Private Real Estate
-                                </span>
-                            </div>
-
-                            <h1 className="overflow-hidden font-serif text-[16vw] font-light leading-[0.82] tracking-[-0.065em] sm:text-[12vw] lg:text-[8.2vw] xl:text-[7.5vw]">
-                                <span className="hero-line block">
-                                    Homes
-                                </span>
-
-                                <span className="hero-line block">
-                                    <span className="italic text-[#C5A880]">
-                                        beyond
-                                    </span>
-                                </span>
-
-                                <span className="hero-line block">
-                                    ordinary.
-                                </span>
-                            </h1>
-
-                            <p className="hero-description mt-9 max-w-[420px] text-sm font-light leading-7 tracking-wide text-[#F4F1EA]/55 sm:text-[15px]">
-                                Exceptional residences and architectural
-                                landmarks selected for those who expect more
-                                from where they live.
-                            </p>
-
-                            <div className="mt-9">
-                                <a
-                                    href="#residences"
-                                    className="hero-button group inline-flex items-center gap-4 rounded-full bg-[#C5A880] px-7 py-4 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#090A0D] transition-all duration-500 hover:bg-[#F4F1EA]"
-                                >
-                                    <span>Explore residences</span>
-
-                                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#090A0D]/10">
-                                        <ArrowUpRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-                                    </span>
-                                </a>
+                                        <span className="flex h-11 w-11 items-center justify-center rounded-full border border-white/30 transition-all duration-500 group-hover:border-[#c5a880] group-hover:bg-[#c5a880] group-hover:text-[#08090b]">
+                                            <ArrowUpRight
+                                                size={15}
+                                                strokeWidth={1.2}
+                                                className="transition-transform duration-500 group-hover:rotate-45"
+                                            />
+                                        </span>
+                                    </a>
+                                )}
                             </div>
                         </div>
-                    </div>
+                    ))}
                 </div>
+
+                <div className="pointer-events-none absolute bottom-0 left-0 h-[22vh] w-full bg-gradient-to-t from-[#08090b] to-transparent" />
             </div>
         </section>
     );
