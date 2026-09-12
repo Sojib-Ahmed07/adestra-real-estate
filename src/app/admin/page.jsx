@@ -9,7 +9,8 @@ import {
   ExternalLink,
   CheckCircle2,
   X,
-  Loader2
+  Loader2,
+  Upload
 } from 'lucide-react';
 
 import {
@@ -25,6 +26,8 @@ import {
   updateProperty,
   deleteProperty
 } from '@/db/actions/properties';
+
+import { upload3DModel } from '@/lib/uploadModel';
 
 import OverviewTab from './components/OverviewTab';
 import PropertiesTab from './components/PropertiesTab';
@@ -43,6 +46,9 @@ export default function AdminPage() {
   const [editingBlogId, setEditingBlogId] = useState(null);
   const [editingPropertyId, setEditingPropertyId] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
+
+  const [selectedImageFile, setSelectedImageFile] = useState(null);
+  const [selectedModelFile, setSelectedModelFile] = useState(null);
 
   const [blogForm, setBlogForm] = useState({
     title: '',
@@ -110,9 +116,10 @@ export default function AdminPage() {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  // Property Modal Triggers
   const handleOpenAddProperty = () => {
     setEditingPropertyId(null);
+    setSelectedImageFile(null);
+    setSelectedModelFile(null);
     setPropertyForm({
       name: '',
       category: 'penthouses',
@@ -131,6 +138,8 @@ export default function AdminPage() {
 
   const handleOpenEditProperty = (prop) => {
     setEditingPropertyId(prop.id);
+    setSelectedImageFile(null);
+    setSelectedModelFile(null);
     setPropertyForm({
       name: prop.name || '',
       category: prop.category || 'penthouses',
@@ -151,27 +160,91 @@ export default function AdminPage() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    if (editingPropertyId) {
-      const res = await updateProperty(editingPropertyId, propertyForm);
-      if (res.success) {
-        showToast('Residence updated successfully');
-        await refreshProperties();
-        setActiveModal(null);
-      } else {
-        showToast('Failed to update residence');
-      }
-    } else {
-      const res = await createProperty(propertyForm);
-      if (res.success) {
-        showToast(`Residence "${res.data.name}" created!`);
-        await refreshProperties();
-        setActiveModal(null);
-      } else {
-        showToast('Failed to create residence');
-      }
-    }
+    try {
+      let finalImageUrl = propertyForm.imageUrl;
+      let finalModelUrl = propertyForm.modelUrl;
 
-    setIsSubmitting(false);
+      // Cloudinary Signed Image Upload
+      if (selectedImageFile) {
+        const timestamp = Math.floor(Date.now() / 1000);
+        const paramsToSign = { timestamp };
+
+        // Sign request via server backend route
+        const sigRes = await fetch('/api/sign-cloudinary', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ paramsToSign }),
+        });
+        const sigData = await sigRes.json();
+
+        if (!sigData.signature) {
+          throw new Error('Failed to obtain Cloudinary signature');
+        }
+
+        const formData = new FormData();
+        formData.append('file', selectedImageFile);
+        formData.append('api_key', process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY);
+        formData.append('timestamp', timestamp);
+        formData.append('signature', sigData.signature);
+
+        const res = await fetch(
+          `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
+          { method: 'POST', body: formData }
+        );
+        const cloudData = await res.json();
+
+        if (cloudData.secure_url) {
+          finalImageUrl = cloudData.secure_url;
+        } else {
+          showToast(`Cloudinary Upload Error: ${cloudData.error?.message || 'Upload failed'}`);
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      // Supabase Direct 3D Model Upload (.glb/.gltf)
+      if (selectedModelFile) {
+        const uploadRes = await upload3DModel(selectedModelFile);
+        if (uploadRes.success) {
+          finalModelUrl = uploadRes.url;
+        } else {
+          showToast(`3D Upload Error: ${uploadRes.error}`);
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      const payload = {
+        ...propertyForm,
+        imageUrl: finalImageUrl,
+        modelUrl: finalModelUrl
+      };
+
+      if (editingPropertyId) {
+        const res = await updateProperty(editingPropertyId, payload);
+        if (res.success) {
+          showToast('Residence updated successfully');
+          await refreshProperties();
+          setActiveModal(null);
+        } else {
+          showToast('Failed to update residence');
+        }
+      } else {
+        const res = await createProperty(payload);
+        if (res.success) {
+          showToast(`Residence "${res.data.name}" created!`);
+          await refreshProperties();
+          setActiveModal(null);
+        } else {
+          showToast('Failed to create residence');
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Error uploading assets');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleDeleteProperty = async (id) => {
@@ -186,7 +259,6 @@ export default function AdminPage() {
     }
   };
 
-  // Blog Handlers
   const handleOpenAddBlog = () => {
     setEditingBlogId(null);
     setBlogForm({
@@ -254,7 +326,6 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-[#090A0D] text-[#F4F1EA] flex flex-col font-sans">
-      {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 bg-[#161822] border border-[#C5A880]/50 px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3">
           <CheckCircle2 size={16} className="text-[#C5A880]" />
@@ -262,7 +333,6 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* Header */}
       <header className="h-16 border-b border-white/5 bg-[#0B0D12]/95 backdrop-blur-xl px-6 md:px-8 flex items-center justify-between sticky top-0 z-30">
         <Link href="/" className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full border border-[#C5A880]/60 flex items-center justify-center bg-[#0B0D12]">
@@ -281,14 +351,12 @@ export default function AdminPage() {
         </Link>
       </header>
 
-      {/* Main Layout */}
       <div className="flex-1 flex flex-col md:flex-row">
-        {/* Sidebar */}
         <aside className="w-full md:w-60 border-b md:border-b-0 md:border-r border-white/5 bg-[#0B0D12] p-4 flex md:flex-col shrink-0">
           <div className="space-y-1.5 w-full flex md:flex-col gap-1 overflow-x-auto">
             <button
               onClick={() => setActiveTab('overview')}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs tracking-wider transition-colors ${activeTab === 'overview'
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs tracking-wider transition-colors cursor-pointer ${activeTab === 'overview'
                   ? 'bg-[#C5A880] text-[#0B0D12] font-semibold'
                   : 'text-white/60 hover:bg-white/[0.03]'
                 }`}
@@ -299,7 +367,7 @@ export default function AdminPage() {
 
             <button
               onClick={() => setActiveTab('properties')}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs tracking-wider transition-colors ${activeTab === 'properties'
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs tracking-wider transition-colors cursor-pointer ${activeTab === 'properties'
                   ? 'bg-[#C5A880] text-[#0B0D12] font-semibold'
                   : 'text-white/60 hover:bg-white/[0.03]'
                 }`}
@@ -310,7 +378,7 @@ export default function AdminPage() {
 
             <button
               onClick={() => setActiveTab('blogs')}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs tracking-wider transition-colors ${activeTab === 'blogs'
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs tracking-wider transition-colors cursor-pointer ${activeTab === 'blogs'
                   ? 'bg-[#C5A880] text-[#0B0D12] font-semibold'
                   : 'text-white/60 hover:bg-white/[0.03]'
                 }`}
@@ -321,7 +389,6 @@ export default function AdminPage() {
           </div>
         </aside>
 
-        {/* Tab Components */}
         <main className="flex-1 p-6 md:p-10 max-w-6xl mx-auto w-full">
           {activeTab === 'overview' && (
             <OverviewTab
@@ -362,7 +429,7 @@ export default function AdminPage() {
           <div className="bg-[#12141C] border border-[#C5A880]/30 rounded-2xl max-w-xl w-full p-6 sm:p-8 space-y-5 relative my-8">
             <button
               onClick={() => setActiveModal(null)}
-              className="absolute top-5 right-5 text-white/40 hover:text-white"
+              className="absolute top-5 right-5 text-white/40 hover:text-white cursor-pointer"
             >
               <X size={18} />
             </button>
@@ -458,25 +525,42 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              <input
-                type="url"
-                placeholder="Cover Image URL (e.g. https://...)"
-                value={propertyForm.imageUrl}
-                onChange={(e) => setPropertyForm({ ...propertyForm, imageUrl: e.target.value })}
-                className="w-full bg-[#0B0D12] border border-white/10 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-[#C5A880]"
-              />
+              {/* Cover Image Input */}
+              <div className="space-y-1.5">
+                <label className="block text-[10px] uppercase tracking-wider text-[#C5A880]">Cover Image (Cloudinary)</label>
+                <div className="flex gap-2">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setSelectedImageFile(e.target.files[0])}
+                    className="w-full text-xs text-white/70 bg-[#0B0D12] border border-white/10 rounded-xl p-2 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-[#C5A880]/20 file:text-[#C5A880] file:text-xs"
+                  />
+                </div>
+                <input
+                  type="url"
+                  placeholder="Or enter image URL"
+                  value={propertyForm.imageUrl}
+                  onChange={(e) => setPropertyForm({ ...propertyForm, imageUrl: e.target.value })}
+                  className="w-full bg-[#0B0D12] border border-white/10 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-[#C5A880] text-[11px]"
+                />
+              </div>
 
-              <div>
-                <textarea
-                  rows={2}
-                  placeholder="Sketchfab 3D Embed Snippet / URL (e.g. <iframe ...></iframe> or https://sketchfab.com/models/...)"
+              {/* 3D Model Asset Input */}
+              <div className="space-y-1.5">
+                <label className="block text-[10px] uppercase tracking-wider text-[#C5A880]">3D Model File (.glb, .gltf - Supabase)</label>
+                <input
+                  type="file"
+                  accept=".glb,.gltf"
+                  onChange={(e) => setSelectedModelFile(e.target.files[0])}
+                  className="w-full text-xs text-white/70 bg-[#0B0D12] border border-white/10 rounded-xl p-2 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-[#C5A880]/20 file:text-[#C5A880] file:text-xs"
+                />
+                <input
+                  type="text"
+                  placeholder="Or enter direct 3D URL (.glb)"
                   value={propertyForm.modelUrl}
                   onChange={(e) => setPropertyForm({ ...propertyForm, modelUrl: e.target.value })}
-                  className="w-full bg-[#0B0D12] border border-white/10 rounded-xl px-3.5 py-2.5 text-white resize-none focus:outline-none focus:border-[#C5A880]"
+                  className="w-full bg-[#0B0D12] border border-white/10 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-[#C5A880] text-[11px]"
                 />
-                <p className="text-[10px] text-white/40 mt-1">
-                  Paste raw Sketchfab embed HTML code or direct URL.
-                </p>
               </div>
 
               <textarea
@@ -492,112 +576,17 @@ export default function AdminPage() {
                 <button
                   type="button"
                   onClick={() => setActiveModal(null)}
-                  className="px-4 py-2 border border-white/10 rounded-xl uppercase text-xs"
+                  className="px-4 py-2 border border-white/10 rounded-xl uppercase text-xs cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-2 bg-[#C5A880] text-[#0B0D12] font-semibold rounded-xl uppercase text-xs flex items-center gap-2 hover:bg-[#F4F1EA] transition-colors"
+                  className="px-5 py-2 bg-[#C5A880] text-[#0B0D12] font-semibold rounded-xl uppercase text-xs flex items-center gap-2 hover:bg-[#F4F1EA] transition-colors cursor-pointer"
                 >
                   {isSubmitting && <Loader2 className="animate-spin h-3.5 w-3.5" />}
                   <span>{editingPropertyId ? 'Save Changes' : 'Create Residence'}</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Modal: Article Form */}
-      {(activeModal === 'add-blog' || activeModal === 'edit-blog') && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-[#12141C] border border-[#C5A880]/30 rounded-2xl max-w-xl w-full p-6 sm:p-8 space-y-5 relative my-8">
-            <button
-              onClick={() => setActiveModal(null)}
-              className="absolute top-5 right-5 text-white/40 hover:text-white"
-            >
-              <X size={18} />
-            </button>
-
-            <h2 className="font-serif text-2xl font-light text-white">
-              {editingBlogId ? 'Edit Article' : 'Write New Article'}
-            </h2>
-
-            <form onSubmit={handleSaveBlog} className="space-y-4 text-xs">
-              <input
-                required
-                type="text"
-                placeholder="Title"
-                value={blogForm.title}
-                onChange={(e) => setBlogForm({ ...blogForm, title: e.target.value })}
-                className="w-full bg-[#0B0D12] border border-white/10 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-[#C5A880]"
-              />
-
-              <div className="grid grid-cols-2 gap-4">
-                <select
-                  value={blogForm.category}
-                  onChange={(e) => setBlogForm({ ...blogForm, category: e.target.value })}
-                  className="w-full bg-[#0B0D12] border border-white/10 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-[#C5A880]"
-                >
-                  <option value="Architecture">Architecture</option>
-                  <option value="Materials">Materials</option>
-                  <option value="Perspective">Perspective</option>
-                  <option value="Places">Places</option>
-                </select>
-
-                <input
-                  required
-                  type="text"
-                  placeholder="Year"
-                  value={blogForm.year}
-                  onChange={(e) => setBlogForm({ ...blogForm, year: e.target.value })}
-                  className="w-full bg-[#0B0D12] border border-white/10 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-[#C5A880]"
-                />
-              </div>
-
-              <input
-                type="url"
-                placeholder="Cover Image URL"
-                value={blogForm.imageUrl}
-                onChange={(e) => setBlogForm({ ...blogForm, imageUrl: e.target.value })}
-                className="w-full bg-[#0B0D12] border border-white/10 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-[#C5A880]"
-              />
-
-              <textarea
-                required
-                rows={2}
-                placeholder="Excerpt"
-                value={blogForm.excerpt}
-                onChange={(e) => setBlogForm({ ...blogForm, excerpt: e.target.value })}
-                className="w-full bg-[#0B0D12] border border-white/10 rounded-xl px-3.5 py-2.5 text-white resize-none focus:outline-none focus:border-[#C5A880]"
-              />
-
-              <textarea
-                required
-                rows={4}
-                placeholder="Content"
-                value={blogForm.content}
-                onChange={(e) => setBlogForm({ ...blogForm, content: e.target.value })}
-                className="w-full bg-[#0B0D12] border border-white/10 rounded-xl px-3.5 py-2.5 text-white resize-none focus:outline-none focus:border-[#C5A880]"
-              />
-
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setActiveModal(null)}
-                  className="px-4 py-2 border border-white/10 rounded-xl uppercase text-xs"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="px-5 py-2 bg-[#C5A880] text-[#0B0D12] font-semibold rounded-xl uppercase text-xs flex items-center gap-2 hover:bg-[#F4F1EA] transition-colors"
-                >
-                  {isSubmitting && <Loader2 className="animate-spin h-3.5 w-3.5" />}
-                  <span>{editingBlogId ? 'Save Changes' : 'Publish'}</span>
                 </button>
               </div>
             </form>

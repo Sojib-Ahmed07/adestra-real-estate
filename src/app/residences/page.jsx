@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { ArrowUpRight, MapPin, Loader2, Building2, Box, Image as ImageIcon } from 'lucide-react';
 import LuxuryNavbar from '@/components/landing/Navbar';
 import Footer from '@/components/landing/Footer';
+import ModelViewer from '@/components/ModelViewer';
 import { getProperties } from '@/db/actions/properties';
 
 /**
@@ -94,7 +95,8 @@ function ResidencesContent() {
     }
   };
 
-  const embedUrl = selectedProperty ? extractSketchfabEmbedUrl(selectedProperty.modelUrl) : null;
+  const isSketchfabModel = selectedProperty?.modelUrl?.includes('sketchfab.com');
+  const embedUrl = selectedProperty && isSketchfabModel ? extractSketchfabEmbedUrl(selectedProperty.modelUrl) : null;
 
   return (
     <main className="bg-[#0B0D12] min-h-screen text-[#F4F1EA] pt-28">
@@ -240,7 +242,7 @@ function ResidencesContent() {
                       <ImageIcon size={12} />
                       Photo
                     </button>
-                    {embedUrl && (
+                    {selectedProperty.modelUrl && (
                       <button
                         onClick={() => setViewMode('3d')}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] uppercase tracking-wider transition-all ${viewMode === '3d'
@@ -254,19 +256,23 @@ function ResidencesContent() {
                     )}
                   </div>
 
-                  {/* Render 3D Embed or Fallback Image */}
-                  {viewMode === '3d' && embedUrl ? (
-                    <iframe
-                      title={`${selectedProperty.name} 3D Model`}
-                      src={embedUrl}
-                      className="w-full h-full border-0"
-                      allow="autoplay; fullscreen; xr-spatial-tracking"
-                      xr-spatial-tracking="true"
-                      execution-while-out-of-viewport="true"
-                      execution-while-not-rendered="true"
-                      web-share="true"
-                      allowFullScreen
-                    />
+                  {/* Render 3D Model (Supabase GLB/GLTF via Three.js OR Sketchfab iframe) or Fallback Image */}
+                  {viewMode === '3d' && selectedProperty.modelUrl ? (
+                    isSketchfabModel && embedUrl ? (
+                      <iframe
+                        title={`${selectedProperty.name} 3D Model`}
+                        src={embedUrl}
+                        className="w-full h-full border-0"
+                        allow="autoplay; fullscreen; xr-spatial-tracking"
+                        xr-spatial-tracking="true"
+                        execution-while-out-of-viewport="true"
+                        execution-while-not-rendered="true"
+                        web-share="true"
+                        allowFullScreen
+                      />
+                    ) : (
+                      <ModelViewer src={selectedProperty.modelUrl} height="h-full" />
+                    )
                   ) : selectedProperty.imageUrl ? (
                     <img
                       src={selectedProperty.imageUrl}
