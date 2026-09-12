@@ -19,9 +19,9 @@ export const inquiries = pgTable('inquiries', {
 // PROPERTIES & RESIDENCES TABLE
 // ==============================================================================
 export const properties = pgTable('properties', {
-  id: varchar('id', { length: 128 }).primaryKey(), // e.g. 'lume-penthouse'
+  id: varchar('id', { length: 128 }).primaryKey(),
   name: varchar('name', { length: 255 }).notNull(),
-  category: varchar('category', { length: 64 }).notNull(), // 'penthouses', 'private-estates', 'waterfront'
+  category: varchar('category', { length: 64 }).notNull(),
   location: varchar('location', { length: 255 }).notNull(),
   price: varchar('price', { length: 64 }).notNull(),
   area: varchar('area', { length: 64 }).notNull(),
@@ -30,6 +30,7 @@ export const properties = pgTable('properties', {
   baths: integer('baths').default(0).notNull(),
   levels: integer('levels').default(1).notNull(),
   imageUrl: text('image_url'),
+  modelUrl: text('model_url'), // <--- ADD THIS FIELD (e.g. "https://sketchfab.com/models/8b31e163cccd4bafbdf186b6d26d283a/embed")
   isFeatured: boolean('is_featured').default(false).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),

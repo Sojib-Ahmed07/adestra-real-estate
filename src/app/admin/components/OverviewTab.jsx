@@ -6,7 +6,9 @@ import { Building2, BookOpen, Plus } from 'lucide-react';
 export default function OverviewTab({
     propertyCount,
     blogCount,
+    isPropertiesLoading,
     isBlogsLoading,
+    onOpenAddProperty,
     onOpenAddBlog
 }) {
     return (
@@ -21,6 +23,13 @@ export default function OverviewTab({
                 </div>
 
                 <div className="flex gap-3">
+                    <button
+                        onClick={onOpenAddProperty}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[#C5A880]/40 text-[#C5A880] text-xs font-semibold uppercase tracking-wider hover:bg-[#C5A880]/10 transition-colors"
+                    >
+                        <Plus size={14} />
+                        <span>Add Residence</span>
+                    </button>
                     <button
                         onClick={onOpenAddBlog}
                         className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#C5A880] text-[#0B0D12] text-xs font-semibold uppercase tracking-wider hover:bg-[#F4F1EA] transition-colors"
@@ -37,7 +46,9 @@ export default function OverviewTab({
                         <span className="text-[9px] uppercase tracking-widest text-white/40 block mb-1">
                             Listed Residences
                         </span>
-                        <div className="font-serif text-4xl font-light text-white">{propertyCount}</div>
+                        <div className="font-serif text-4xl font-light text-white">
+                            {isPropertiesLoading ? '...' : propertyCount}
+                        </div>
                         <span className="text-xs text-[#C5A880] mt-1 block">Active Portfolio</span>
                     </div>
                     <div className="p-3 bg-[#C5A880]/10 text-[#C5A880] rounded-xl">

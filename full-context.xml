@@ -1,3 +1,420 @@
+This file is a merged representation of a subset of the codebase, containing specifically included files, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of a subset of the repository's contents that is considered the most important context.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Only files matching these patterns are included: src/app/admin/**
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+src/
+  app/
+    admin/
+      components/
+        JournalTab.jsx
+        OverviewTab.jsx
+        PropertiesTab.jsx
+      page.jsx
+      README.md
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="src/app/admin/components/JournalTab.jsx">
+'use client';
+
+import React from 'react';
+import Link from 'next/link';
+import { Plus, Trash2, Eye, Edit2, Loader2 } from 'lucide-react';
+
+export default function JournalTab({
+    blogs,
+    isLoading,
+    onOpenAdd,
+    onOpenEdit,
+    onDelete
+}) {
+    return (
+        <div className="space-y-6 animate-in fade-in duration-300">
+            <div className="flex flex-col sm:flex-row justify-between sm:items-end gap-4 border-b border-white/5 pb-6">
+                <div>
+                    <div className="flex items-center gap-2 mb-2 text-[#C5A880]">
+                        <span className="h-px w-6 bg-[#C5A880]" />
+                        <span className="text-[8px] uppercase tracking-[0.3em]">Drizzle ORM Engine</span>
+                    </div>
+                    <h1 className="font-serif text-3xl font-light tracking-tight">Journal & Articles</h1>
+                </div>
+
+                <button
+                    onClick={onOpenAdd}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C5A880] text-[#0B0D12] text-xs font-semibold uppercase tracking-wider hover:bg-[#F4F1EA] transition-colors"
+                >
+                    <Plus size={15} />
+                    <span>Create Article</span>
+                </button>
+            </div>
+
+            {isLoading ? (
+                <div className="py-20 flex justify-center items-center text-[#C5A880]">
+                    <Loader2 className="animate-spin h-8 w-8" />
+                </div>
+            ) : blogs.length === 0 ? (
+                <div className="py-16 text-center border border-dashed border-white/10 rounded-2xl">
+                    <p className="text-sm text-white/40 mb-4">No articles found in the database.</p>
+                    <button
+                        onClick={onOpenAdd}
+                        className="px-4 py-2 bg-[#C5A880] text-[#0B0D12] rounded-xl text-xs font-semibold"
+                    >
+                        Create First Article
+                    </button>
+                </div>
+            ) : (
+                <div className="space-y-4">
+                    {blogs.map((b) => (
+                        <div
+                            key={b.id}
+                            className="bg-[#12141C] border border-white/5 rounded-2xl p-6 flex flex-col md:flex-row justify-between md:items-center gap-6"
+                        >
+                            <div className="flex items-start gap-4">
+                                {b.imageUrl && (
+                                    <div className="w-20 h-20 rounded-xl overflow-hidden bg-black shrink-0 hidden sm:block">
+                                        <img src={b.imageUrl} alt={b.title} className="w-full h-full object-cover" />
+                                    </div>
+                                )}
+                                <div>
+                                    <div className="flex items-center gap-3 mb-1">
+                                        <span className="text-[9px] uppercase tracking-widest text-[#C5A880] font-mono">
+                                            {b.category}
+                                        </span>
+                                        <span className="text-[9px] text-white/30 font-mono">{b.year}</span>
+                                        <span className="text-[9px] text-white/20 font-mono">/journal/{b.slug}</span>
+                                    </div>
+                                    <h3 className="font-serif text-xl font-light text-white mb-2">{b.title}</h3>
+                                    <p className="text-xs text-white/50 leading-relaxed max-w-xl">{b.excerpt}</p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-3 shrink-0">
+                                <Link
+                                    href={`/journal/${b.slug}`}
+                                    target="_blank"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-xs text-white/70 hover:text-white transition-colors"
+                                >
+                                    <Eye size={13} />
+                                    <span>View</span>
+                                </Link>
+
+                                <button
+                                    onClick={() => onOpenEdit(b)}
+                                    className="p-2 text-white/50 hover:text-[#C5A880] hover:bg-white/5 rounded-lg transition-colors"
+                                    title="Edit Article"
+                                >
+                                    <Edit2 size={14} />
+                                </button>
+
+                                <button
+                                    onClick={() => onDelete(b.id)}
+                                    className="p-2 text-white/30 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                                    title="Delete Post"
+                                >
+                                    <Trash2 size={14} />
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+</file>
+
+<file path="src/app/admin/components/OverviewTab.jsx">
+'use client';
+
+import React from 'react';
+import { Building2, BookOpen, Plus } from 'lucide-react';
+
+export default function OverviewTab({
+    propertyCount,
+    blogCount,
+    isPropertiesLoading,
+    isBlogsLoading,
+    onOpenAddProperty,
+    onOpenAddBlog
+}) {
+    return (
+        <div className="space-y-8 animate-in fade-in duration-300">
+            <div className="flex flex-col sm:flex-row justify-between sm:items-end gap-4 border-b border-white/5 pb-6">
+                <div>
+                    <div className="flex items-center gap-2 mb-2 text-[#C5A880]">
+                        <span className="h-px w-6 bg-[#C5A880]" />
+                        <span className="text-[8px] uppercase tracking-[0.3em]">Studio Control</span>
+                    </div>
+                    <h1 className="font-serif text-3xl font-light tracking-tight">Dashboard Overview</h1>
+                </div>
+
+                <div className="flex gap-3">
+                    <button
+                        onClick={onOpenAddProperty}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[#C5A880]/40 text-[#C5A880] text-xs font-semibold uppercase tracking-wider hover:bg-[#C5A880]/10 transition-colors"
+                    >
+                        <Plus size={14} />
+                        <span>Add Residence</span>
+                    </button>
+                    <button
+                        onClick={onOpenAddBlog}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#C5A880] text-[#0B0D12] text-xs font-semibold uppercase tracking-wider hover:bg-[#F4F1EA] transition-colors"
+                    >
+                        <Plus size={14} />
+                        <span>Write Essay</span>
+                    </button>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="bg-[#12141C] border border-white/5 rounded-2xl p-6 flex justify-between items-center">
+                    <div>
+                        <span className="text-[9px] uppercase tracking-widest text-white/40 block mb-1">
+                            Listed Residences
+                        </span>
+                        <div className="font-serif text-4xl font-light text-white">
+                            {isPropertiesLoading ? '...' : propertyCount}
+                        </div>
+                        <span className="text-xs text-[#C5A880] mt-1 block">Active Portfolio</span>
+                    </div>
+                    <div className="p-3 bg-[#C5A880]/10 text-[#C5A880] rounded-xl">
+                        <Building2 size={24} />
+                    </div>
+                </div>
+
+                <div className="bg-[#12141C] border border-white/5 rounded-2xl p-6 flex justify-between items-center">
+                    <div>
+                        <span className="text-[9px] uppercase tracking-widest text-white/40 block mb-1">
+                            Live Journal Entries
+                        </span>
+                        <div className="font-serif text-4xl font-light text-white">
+                            {isBlogsLoading ? '...' : blogCount}
+                        </div>
+                        <span className="text-xs text-[#C5A880] mt-1 block">Connected to Database</span>
+                    </div>
+                    <div className="p-3 bg-white/5 text-white/70 rounded-xl">
+                        <BookOpen size={24} />
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+</file>
+
+<file path="src/app/admin/components/PropertiesTab.jsx">
+'use client';
+
+import React from 'react';
+import Link from 'next/link';
+import { MapPin, Trash2, Plus, Edit2, Loader2, Eye } from 'lucide-react';
+
+export default function PropertiesTab({
+    properties,
+    isLoading,
+    onOpenAdd,
+    onOpenEdit,
+    onDeleteProperty
+}) {
+    return (
+        <div className="space-y-6 animate-in fade-in duration-300">
+            <div className="flex flex-col sm:flex-row justify-between sm:items-end gap-4 border-b border-white/5 pb-6">
+                <div>
+                    <div className="flex items-center gap-2 mb-2 text-[#C5A880]">
+                        <span className="h-px w-6 bg-[#C5A880]" />
+                        <span className="text-[8px] uppercase tracking-[0.3em]">Portfolio & 3D Assets</span>
+                    </div>
+                    <h1 className="font-serif text-3xl font-light tracking-tight">Properties & 3D Assets</h1>
+                </div>
+
+                <button
+                    onClick={onOpenAdd}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C5A880] text-[#0B0D12] text-xs font-semibold uppercase tracking-wider hover:bg-[#F4F1EA] transition-colors"
+                >
+                    <Plus size={15} />
+                    <span>Create Residence</span>
+                </button>
+            </div>
+
+            {isLoading ? (
+                <div className="py-20 flex justify-center items-center text-[#C5A880]">
+                    <Loader2 className="animate-spin h-8 w-8" />
+                </div>
+            ) : properties.length === 0 ? (
+                <div className="py-16 text-center border border-dashed border-white/10 rounded-2xl">
+                    <p className="text-sm text-white/40 mb-4">No residences found in the database.</p>
+                    <button
+                        onClick={onOpenAdd}
+                        className="px-4 py-2 bg-[#C5A880] text-[#0B0D12] rounded-xl text-xs font-semibold"
+                    >
+                        Create First Residence
+                    </button>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {properties.map((prop) => (
+                        <div
+                            key={prop.id}
+                            className="bg-[#12141C] border border-white/5 rounded-2xl overflow-hidden flex flex-col justify-between group"
+                        >
+                            <div>
+                                <div className="relative h-44 w-full overflow-hidden bg-black">
+                                    {prop.imageUrl ? (
+                                        <img
+                                            src={prop.imageUrl}
+                                            alt={prop.name}
+                                            className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                        />
+                                    ) : (
+                                        <div className="h-full w-full flex items-center justify-center text-white/20 text-xs">
+                                            No Image Available
+                                        </div>
+                                    )}
+                                    <div className="absolute top-3 left-3 bg-[#0B0D12]/80 backdrop-blur-md px-3 py-1 rounded-full text-[9px] uppercase tracking-widest text-[#C5A880] border border-white/10">
+                                        {prop.category}
+                                    </div>
+                                </div>
+
+                                <div className="p-5">
+                                    <div className="flex justify-between items-start mb-1">
+                                        <h3 className="font-serif text-lg font-light text-white">{prop.name}</h3>
+                                        <span className="text-sm font-semibold text-[#C5A880]">{prop.price}</span>
+                                    </div>
+                                    <p className="text-xs text-white/50 flex items-center gap-1 mb-3">
+                                        <MapPin size={12} className="text-[#C5A880]" /> {prop.location}
+                                    </p>
+                                    <div className="flex gap-3 text-[10px] text-white/40 font-mono border-t border-white/5 pt-3">
+                                        <span>{prop.beds} Beds</span>
+                                        <span>•</span>
+                                        <span>{prop.baths} Baths</span>
+                                        <span>•</span>
+                                        <span>{prop.levels} Floors</span>
+                                        <span>•</span>
+                                        <span>{prop.area}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="px-5 pb-5 pt-2 flex justify-between items-center border-t border-white/5">
+                                <Link
+                                    href={`/residences?type=${prop.category}`}
+                                    target="_blank"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-xs text-white/70 hover:text-white transition-colors"
+                                >
+                                    <Eye size={13} />
+                                    <span>Preview</span>
+                                </Link>
+
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => onOpenEdit(prop)}
+                                        className="p-2 text-white/50 hover:text-[#C5A880] hover:bg-white/5 rounded-lg transition-colors"
+                                        title="Edit Residence"
+                                    >
+                                        <Edit2 size={14} />
+                                    </button>
+                                    <button
+                                        onClick={() => onDeleteProperty(prop.id)}
+                                        className="p-2 text-white/30 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                                        title="Delete Residence"
+                                    >
+                                        <Trash2 size={14} />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+</file>
+
+<file path="src/app/admin/README.md">
+# Admin Portal Manual (`src/app/admin`)
+
+This directory houses the administrative dashboard for the **VALOIS Estates & Mansions** web platform.
+
+---
+
+## 📌 Simplified & Focused Architecture
+
+* **Path:** `src/app/admin/page.jsx`
+* **Route:** `/admin`
+* **Scope:** 
+  * Focused exclusively on **Property Management (with 3D assets)** and **Journal / Blog Publishing**.
+  * No payment gateways, pricing calculations, or client inquiry/contact management (contact form submissions will route directly via EmailJS).
+
+---
+
+## 🎯 Active Modules
+
+### 1. Overview
+* Clean summary displaying total active residences and published blog posts.
+* Quick action buttons to immediately upload a property or write a new blog post.
+* Recent properties quick view.
+
+### 2. Properties & 3D Assets Management
+* **List View:** Shows all listed residences with cover image, category, location, price display, bedrooms, bathrooms, floors, and total area.
+* **3D Asset Indicator:** Clearly badges whether a property has an attached custom `.glb`/`.gltf` asset or uses procedural 3D luxury geometry.
+* **Actions:**
+  * Preview live on `/residences?type=...`
+  * Delete property.
+* **"Upload Property & 3D Asset" Modal Form:**
+  * Fields: Name, Category (`penthouses`, `private-estates`, `waterfront`), Location, Price Display, Area (sqft), Beds, Baths, Floors, 3D Model Asset URL (`.glb`), Cover Image URL, and Architectural Description.
+
+### 3. Blog & Journal Publishing
+* **List View:** Manage published articles with category tag, year, title, excerpt, and cover photo.
+* **Actions:**
+  * Preview live on `/journal`
+  * Delete blog post.
+* **"Write New Blog Post" Modal Form:**
+  * Fields: Article Title, Category (`Architecture`, `Materials`, `Perspective`, `Places`), Year, Cover Image URL, Excerpt, and Full Article Content.
+</file>
+
+<file path="src/app/admin/page.jsx">
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -63,8 +480,7 @@ export default function AdminPage() {
     beds: 3,
     baths: 3,
     levels: 1,
-    imageUrl: '',
-    modelUrl: ''
+    imageUrl: ''
   });
 
   useEffect(() => {
@@ -123,8 +539,7 @@ export default function AdminPage() {
       beds: 3,
       baths: 3,
       levels: 1,
-      imageUrl: '',
-      modelUrl: ''
+      imageUrl: ''
     });
     setActiveModal('add-property');
   };
@@ -141,8 +556,7 @@ export default function AdminPage() {
       beds: prop.beds || 0,
       baths: prop.baths || 0,
       levels: prop.levels || 1,
-      imageUrl: prop.imageUrl || '',
-      modelUrl: prop.modelUrl || ''
+      imageUrl: prop.imageUrl || ''
     });
     setActiveModal('edit-property');
   };
@@ -289,8 +703,8 @@ export default function AdminPage() {
             <button
               onClick={() => setActiveTab('overview')}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs tracking-wider transition-colors ${activeTab === 'overview'
-                  ? 'bg-[#C5A880] text-[#0B0D12] font-semibold'
-                  : 'text-white/60 hover:bg-white/[0.03]'
+                ? 'bg-[#C5A880] text-[#0B0D12] font-semibold'
+                : 'text-white/60 hover:bg-white/[0.03]'
                 }`}
             >
               <LayoutDashboard size={16} />
@@ -300,8 +714,8 @@ export default function AdminPage() {
             <button
               onClick={() => setActiveTab('properties')}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs tracking-wider transition-colors ${activeTab === 'properties'
-                  ? 'bg-[#C5A880] text-[#0B0D12] font-semibold'
-                  : 'text-white/60 hover:bg-white/[0.03]'
+                ? 'bg-[#C5A880] text-[#0B0D12] font-semibold'
+                : 'text-white/60 hover:bg-white/[0.03]'
                 }`}
             >
               <Building2 size={16} />
@@ -311,8 +725,8 @@ export default function AdminPage() {
             <button
               onClick={() => setActiveTab('blogs')}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs tracking-wider transition-colors ${activeTab === 'blogs'
-                  ? 'bg-[#C5A880] text-[#0B0D12] font-semibold'
-                  : 'text-white/60 hover:bg-white/[0.03]'
+                ? 'bg-[#C5A880] text-[#0B0D12] font-semibold'
+                : 'text-white/60 hover:bg-white/[0.03]'
                 }`}
             >
               <BookOpen size={16} />
@@ -460,24 +874,11 @@ export default function AdminPage() {
 
               <input
                 type="url"
-                placeholder="Cover Image URL (e.g. https://...)"
+                placeholder="Cover Image URL"
                 value={propertyForm.imageUrl}
                 onChange={(e) => setPropertyForm({ ...propertyForm, imageUrl: e.target.value })}
                 className="w-full bg-[#0B0D12] border border-white/10 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-[#C5A880]"
               />
-
-              <div>
-                <textarea
-                  rows={2}
-                  placeholder="Sketchfab 3D Embed Snippet / URL (e.g. <iframe ...></iframe> or https://sketchfab.com/models/...)"
-                  value={propertyForm.modelUrl}
-                  onChange={(e) => setPropertyForm({ ...propertyForm, modelUrl: e.target.value })}
-                  className="w-full bg-[#0B0D12] border border-white/10 rounded-xl px-3.5 py-2.5 text-white resize-none focus:outline-none focus:border-[#C5A880]"
-                />
-                <p className="text-[10px] text-white/40 mt-1">
-                  Paste raw Sketchfab embed HTML code or direct URL.
-                </p>
-              </div>
 
               <textarea
                 required
@@ -607,3 +1008,6 @@ export default function AdminPage() {
     </div>
   );
 }
+</file>
+
+</files>
