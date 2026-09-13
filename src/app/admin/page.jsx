@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   Building2,
@@ -10,7 +11,8 @@ import {
   CheckCircle2,
   X,
   Loader2,
-  Upload
+  Upload,
+  LogOut
 } from 'lucide-react';
 
 import {
@@ -34,6 +36,7 @@ import PropertiesTab from './components/PropertiesTab';
 import JournalTab from './components/JournalTab';
 
 export default function AdminPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
 
   const [properties, setProperties] = useState([]);
@@ -96,6 +99,16 @@ export default function AdminPage() {
       isMounted = false;
     };
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/admin/logout', { method: 'POST' });
+      router.push('/admin/login');
+      router.refresh();
+    } catch (err) {
+      console.error('Logout failed', err);
+    }
+  };
 
   const refreshBlogs = async () => {
     setIsBlogsLoading(true);
@@ -341,14 +354,24 @@ export default function AdminPage() {
           <span className="font-serif text-sm tracking-[0.2em] uppercase font-medium">VALOIS</span>
         </Link>
 
-        <Link
-          href="/"
-          target="_blank"
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-white/10 hover:border-[#C5A880] text-[10px] uppercase tracking-wider text-white/70 hover:text-white transition-colors"
-        >
-          <span>View Public Site</span>
-          <ExternalLink size={12} />
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/"
+            target="_blank"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-white/10 hover:border-[#C5A880] text-[10px] uppercase tracking-wider text-white/70 hover:text-white transition-colors"
+          >
+            <span>View Public Site</span>
+            <ExternalLink size={12} />
+          </Link>
+
+          <button
+            onClick={handleLogout}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 text-[10px] uppercase tracking-wider transition-colors cursor-pointer"
+          >
+            <LogOut size={12} />
+            <span>Logout</span>
+          </button>
+        </div>
       </header>
 
       <div className="flex-1 flex flex-col md:flex-row">
@@ -357,8 +380,8 @@ export default function AdminPage() {
             <button
               onClick={() => setActiveTab('overview')}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs tracking-wider transition-colors cursor-pointer ${activeTab === 'overview'
-                  ? 'bg-[#C5A880] text-[#0B0D12] font-semibold'
-                  : 'text-white/60 hover:bg-white/[0.03]'
+                ? 'bg-[#C5A880] text-[#0B0D12] font-semibold'
+                : 'text-white/60 hover:bg-white/[0.03]'
                 }`}
             >
               <LayoutDashboard size={16} />
@@ -368,8 +391,8 @@ export default function AdminPage() {
             <button
               onClick={() => setActiveTab('properties')}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs tracking-wider transition-colors cursor-pointer ${activeTab === 'properties'
-                  ? 'bg-[#C5A880] text-[#0B0D12] font-semibold'
-                  : 'text-white/60 hover:bg-white/[0.03]'
+                ? 'bg-[#C5A880] text-[#0B0D12] font-semibold'
+                : 'text-white/60 hover:bg-white/[0.03]'
                 }`}
             >
               <Building2 size={16} />
@@ -379,8 +402,8 @@ export default function AdminPage() {
             <button
               onClick={() => setActiveTab('blogs')}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs tracking-wider transition-colors cursor-pointer ${activeTab === 'blogs'
-                  ? 'bg-[#C5A880] text-[#0B0D12] font-semibold'
-                  : 'text-white/60 hover:bg-white/[0.03]'
+                ? 'bg-[#C5A880] text-[#0B0D12] font-semibold'
+                : 'text-white/60 hover:bg-white/[0.03]'
                 }`}
             >
               <BookOpen size={16} />
