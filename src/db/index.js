@@ -2,28 +2,33 @@ import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
 import * as schema from './schema';
 
-let _dbInstance = null;
-
 /**
- * Lazily initialize and return the Drizzle Neon client.
- * This prevents static build crashes if DATABASE_URL is not yet defined in the environment.
+ * Dynamically resolves DATABASE_URL across Vercel, Cloudflare, and local dev.
  */
-export function getDb() {
-  if (!_dbInstance) {
-    const connectionString = process.env.DATABASE_URL;
-    if (!connectionString || connectionString.includes('your_password_here')) {
-      throw new Error(
-        'DATABASE_URL is not set or contains placeholder values. Please update your .env.local file with your Neon PostgreSQL connection string.'
-      );
-    }
-    const sql = neon(connectionString);
-    _dbInstance = drizzle(sql, { schema });
+export function getConnectionString(runtimeEnv) {
+  const connectionString = runtimeEnv?.DATABASE_URL || process.env.DATABASE_URL;
+
+  if (!connectionString || connectionString.includes('your_password_here')) {
+    throw new Error(
+      '[Database Error]: DATABASE_URL is missing or contains placeholder values. ' +
+      'Check your .env.local, Vercel Env Vars, or Cloudflare Secrets.'
+    );
   }
-  return _dbInstance;
+
+  return connectionString;
 }
 
 /**
- * Direct db export for queries: e.g. await db.select().from(inquiries)
+ * Creates a Drizzle instance dynamically on demand.
+ */
+export function getDb(runtimeEnv) {
+  const connectionString = getConnectionString(runtimeEnv);
+  const sql = neon(connectionString);
+  return drizzle(sql, { schema });
+}
+
+/**
+ * Universal export for Server Components, Actions, and Route Handlers.
  */
 export const db = new Proxy({}, {
   get(target, prop) {
