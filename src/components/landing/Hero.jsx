@@ -7,8 +7,11 @@ import { ArrowUpRight } from 'lucide-react';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const VIDEO_URL =
+const DESKTOP_VIDEO_URL =
     'https://res.cloudinary.com/da8gaio3l/video/upload/v1789282477/output_qivthk.mp4';
+
+const MOBILE_VIDEO_URL =
+    'https://res.cloudinary.com/da8gaio3l/video/upload/v1790233202/From_Klickpin.com-_7_Trending_Clean_Girl_Makeup_Looks_for_Right_Now-pin-id-896216394613598828_online-video-cutter.com_gbacfq.mp4';
 
 const scenes = [
     {
@@ -42,28 +45,28 @@ const scenes = [
 
 export default function HeroSection() {
     const sectionRef = useRef(null);
-    const videoRef = useRef(null);
+    const desktopVideoRef = useRef(null);
     const scenesRef = useRef([]);
     const indicatorsRef = useRef([]);
     const scrollIndicatorRef = useRef(null);
     const [isVideoReady, setIsVideoReady] = useState(false);
 
     useEffect(() => {
-        const video = videoRef.current;
+        const video = desktopVideoRef.current;
         const section = sectionRef.current;
-        if (!video || !section) return;
+        if (!section) return;
 
-        let ctx;
+        // Use gsap.matchMedia to execute ScrollTrigger ONLY on desktop screens
+        const mm = gsap.matchMedia();
 
-        const initAnimations = () => {
-            if (!video.duration || isNaN(video.duration)) return;
+        mm.add('(min-width: 768px)', () => {
+            const initDesktopAnimations = () => {
+                if (!video || !video.duration || isNaN(video.duration)) return;
 
-            setIsVideoReady(true);
+                setIsVideoReady(true);
+                video.pause();
+                video.currentTime = 0;
 
-            video.pause();
-            video.currentTime = 0;
-
-            ctx = gsap.context(() => {
                 const sceneElements = scenesRef.current;
                 const totalDuration = 10;
 
@@ -137,6 +140,7 @@ export default function HeroSection() {
                     );
                 }
 
+                // Scene 0 Animations
                 const s0 = sceneElements[0];
                 if (s0) {
                     const eyebrow = s0.querySelector('.hero-eyebrow');
@@ -169,6 +173,7 @@ export default function HeroSection() {
                         .to(s0, { autoAlpha: 0, duration: 0.01 }, 2.6);
                 }
 
+                // Scene 1 Animations
                 const s1 = sceneElements[1];
                 if (s1) {
                     const eyebrow = s1.querySelector('.hero-eyebrow');
@@ -223,6 +228,7 @@ export default function HeroSection() {
                         .to(s1, { autoAlpha: 0, duration: 0.01 }, 6.1);
                 }
 
+                // Scene 2 Animations
                 const s2 = sceneElements[2];
                 if (s2) {
                     const eyebrow = s2.querySelector('.hero-eyebrow');
@@ -274,32 +280,90 @@ export default function HeroSection() {
                     tl.to(ind1, { opacity: 0.35, scale: 1, duration: 0.4 }, 5.9)
                         .to(ind2, { opacity: 1, scale: 1.1, duration: 0.4 }, 6.0);
                 }
-            }, section);
-        };
+            };
 
-        if (video.readyState >= 1) {
-            initAnimations();
-        } else {
-            video.addEventListener('loadedmetadata', initAnimations);
-        }
-
-        return () => {
             if (video) {
-                video.removeEventListener('loadedmetadata', initAnimations);
+                if (video.readyState >= 1) {
+                    initDesktopAnimations();
+                } else {
+                    video.addEventListener('loadedmetadata', initDesktopAnimations);
+                }
             }
-            if (ctx) ctx.revert();
-        };
+
+            return () => {
+                if (video) {
+                    video.removeEventListener('loadedmetadata', initDesktopAnimations);
+                }
+            };
+        });
+
+        return () => mm.revert();
     }, []);
+
+    const mobileScene = scenes[0];
 
     return (
         <section
             ref={sectionRef}
-            className="relative h-[350vh] w-full bg-[#08090b]"
+            className="relative h-screen md:h-[350vh] w-full bg-[#08090b]"
         >
-            <div className="sticky top-0 h-screen w-full overflow-hidden">
+            {/* MOBILE VIEW (no scrolltrigger, normal looping background video + single text overlay) */}
+            <div className="relative h-full w-full overflow-hidden md:hidden flex items-center">
                 <video
-                    ref={videoRef}
-                    src={VIDEO_URL}
+                    src={MOBILE_VIDEO_URL}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload="auto"
+                    className="absolute inset-0 h-full w-full object-cover pointer-events-none select-none"
+                />
+
+                <div className="absolute inset-0 bg-black/40 pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#08090b] via-transparent to-black/30 pointer-events-none" />
+
+                <div className="relative z-10 px-6 w-full">
+                    <div className="mb-4 text-[10px] font-medium uppercase tracking-[0.35em] text-[#c5a880]">
+                        {mobileScene.eyebrow}
+                    </div>
+
+                    <h1 className="font-serif text-[3.2rem] font-light leading-[0.9] tracking-[-0.05em] text-[#f4f1ea]">
+                        {mobileScene.lines.map((line) => (
+                            <span key={line} className="block">
+                                {line}
+                            </span>
+                        ))}
+                    </h1>
+
+                    <p className="mt-5 max-w-[320px] text-[13px] leading-[1.7] text-white/80">
+                        {mobileScene.description}
+                    </p>
+
+                    {mobileScene.button && (
+                        <a
+                            href={mobileScene.href || '#'}
+                            className="group mt-7 inline-flex items-center gap-3"
+                        >
+                            <span className="text-[10px] uppercase tracking-[0.25em] text-white transition-colors duration-300 group-hover:text-[#c5a880]">
+                                {mobileScene.button}
+                            </span>
+                            <span className="flex h-10 w-10 items-center justify-center rounded-full border border-white/40 transition-all duration-300 group-hover:border-[#c5a880] group-hover:bg-[#c5a880] group-hover:text-[#08090b]">
+                                <ArrowUpRight
+                                    size={14}
+                                    strokeWidth={1.2}
+                                    className="transition-transform duration-300 group-hover:rotate-45"
+                                />
+                            </span>
+                        </a>
+                    )}
+                </div>
+            </div>
+
+            {/* DESKTOP VIEW (keeps original 350vh pinned GSAP scroll trigger timeline) */}
+            <div className="hidden md:block sticky top-0 h-screen w-full overflow-hidden">
+                <video
+                    ref={desktopVideoRef}
+                    src={DESKTOP_VIDEO_URL}
                     muted
                     playsInline
                     preload="auto"
